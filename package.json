@@ -3,6 +3,7 @@
   "displayName": "TGA Image Preview",
   "description": "Preview TGA Images",
   "version": "1.0.0",
+  "publisher": "lunarwtr",
   "engines": {
     "vscode": "^1.66.0"
   },
@@ -17,6 +18,10 @@
 		"Viewer"
 	],
   "license": "MIT",
+  "repository": {
+		"type": "git",
+		"url": "https://github.com/lunarwtr/tga-image-preview.git"
+	},
   "icon": "icon.png",
   "activationEvents": [
     "onCustomEditor:tga.previewEditor",
