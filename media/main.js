@@ -74,7 +74,8 @@
 	});
 
 	vscode.postMessage({ command: 'getMappedImages' });
-	let texturesFilesMappedImagesDictionary = {};
+
+    let selectedImageInfo = null; // hold the selected image info.
 
 	window.addEventListener('message', event => {
 		const { command, data } = event.data;
@@ -92,12 +93,23 @@
                 option.imageInfo = imageInfo;
 				mappedImageSelect.appendChild(option);
 			});
+			// Select first image if any
+			if (data.mappedImages.length > 0) {
+				selectedImageInfo = data.mappedImages[0];
+				mappedImageSelect.value = data.mappedImages[0].mappedImageName;
+				const coordinatesInput = document.getElementById('coordinates');
+				let coords = selectedImageInfo?.coords;
+				if(coords){
+					coordinatesInput.value = `Left:${coords.left} Top:${coords.top} Right:${coords.right} Bottom:${coords.bottom}`;
+					updateHighlightFrame(coords);
+				}
+			}
 		}
 	});
 
+	const mappedImageSelect = document.getElementById('mappedImageSelect');
 	mappedImageSelect.addEventListener('change', () => {
-        const selectedOption =  document.getElementById('mappedImageSelect').selectedOptions[0]
-        const selectedImageInfo = selectedOption.imageInfo;
+        selectedImageInfo =  document.getElementById('mappedImageSelect').selectedOptions[0].imageInfo;
         console.log('main.js - mappedImageSelect change', selectedImageInfo);
 		const coordinatesInput = document.getElementById('coordinates');
         let coords = selectedImageInfo?.coords;
@@ -131,14 +143,14 @@
 	container.appendChild(highlightFrame);
 
     function updateHighlightFrame(coords) {
-        if (!coords) {
+        if (!coords || !selectedImageInfo) {
             highlightFrame.style.display = 'none';
             return;
         }
 
         const imageRect = image.getBoundingClientRect();
         const containerRect = container.getBoundingClientRect();
-        const zoom =  image.style.zoom || 1;
+        const zoom =  parseFloat(image.style.zoom) || 1;
         const offsetX = imageRect.left - containerRect.left;
         const offsetY = imageRect.top - containerRect.top;
 
@@ -153,7 +165,7 @@
 		if (!image || !hasLoadedImage || !image.parentElement) {
 			return;
 		}
-
+		let prevScale = scale;
 		if (newScale === 'fit') {
 			scale = 'fit';
 			image.classList.add('scale-to-fit');
@@ -183,12 +195,15 @@
 			window.scrollTo(newScrollX, newScrollY);
 
 			vscode.setState({ scale: scale, offsetX: newScrollX, offsetY: newScrollY });
-			const selectedMappedImage =  document.getElementById('mappedImageSelect').selectedOptions[0]
-			if (selectedMappedImage) {
-				const selectedImageInfo = selectedOption.imageInfo;
+            // update the frame on zoom.
+            if (selectedImageInfo && prevScale === 'fit') {
 				let coords = selectedImageInfo?.coords;
 				updateHighlightFrame(coords)
-			}
+			} else if (selectedImageInfo)
+            {
+                let coords = selectedImageInfo?.coords;
+                updateHighlightFrame(coords)
+            }
 		}
 
 		vscode.postMessage({
@@ -367,6 +382,7 @@
 			return;
 		}
 		hasLoadedImage = true;
+		console.log("image loaded and container ready");
 
 		vscode.postMessage({
 			type: 'size',
@@ -374,6 +390,7 @@
 		});
 
 		document.body.classList.remove('loading');
+
 		document.body.classList.add('ready');
 		document.body.append(image);
 

@@ -130,7 +130,6 @@ class Preview extends Disposable {
 			command: 'setMappedImages',
 			data: {
 				mappedImages: mappedImages,
-        		texturesFilesMappedImagesDictionary : this.texturesFilesMappedImagesDictionary
 			},
 		});
 		this._register(webviewEditor.webview.onDidReceiveMessage(message => {
@@ -299,12 +298,14 @@ class Preview extends Disposable {
             margin: 0;
             padding: 0;
         }
-        .highlight-frame {
-            position: absolute;
-            border: 2px solid red;
-            pointer-events: none;
-            display: none;
-          }
+		.highlight-frame {
+		  position: absolute;
+		  border: 5px solid red;
+		  pointer-events: none;
+		  display: none;
+		}
+
+
     </style>
 	<link rel="stylesheet" href="${escapeAttribute(this.extensionResource('/media/main.css'))}" type="text/css" media="screen" nonce="${nonce}">
 
