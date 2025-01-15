@@ -15,6 +15,9 @@ Simple TGA Image (TARGA) Previewer based on Vscode built in [Image Preview exten
 
 This VS Code extension provides a convenient way to preview TGA images, especially those used with texture mapping defined in INI files. It allows you to visualize mapped image regions within the larger TGA texture.
 
+![image](https://github.com/user-attachments/assets/7a9bcd7e-64d4-4a2d-8495-5cc2fd28441b)
+
+
 ## Features
 
 * **TGA Image Preview:** View TGA images directly within the VS Code editor.
