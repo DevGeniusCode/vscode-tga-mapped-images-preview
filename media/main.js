@@ -196,14 +196,10 @@
 
 			vscode.setState({ scale: scale, offsetX: newScrollX, offsetY: newScrollY });
             // update the frame on zoom.
-            if (selectedImageInfo && prevScale === 'fit') {
+			if (selectedImageInfo) {
 				let coords = selectedImageInfo?.coords;
-				updateHighlightFrame(coords)
-			} else if (selectedImageInfo)
-            {
-                let coords = selectedImageInfo?.coords;
-                updateHighlightFrame(coords)
-            }
+				updateHighlightFrame(coords);
+			}
 		}
 
 		vscode.postMessage({

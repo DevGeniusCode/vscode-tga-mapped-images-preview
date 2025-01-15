@@ -312,9 +312,8 @@ class Preview extends Disposable {
 	<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: ${cspSource}; script-src 'nonce-${nonce}'; style-src ${cspSource} 'nonce-${nonce}';">
 	<meta id="image-preview-settings" data-settings="${escapeAttribute(JSON.stringify(settings))}">
 </head>
-<body>
+<body class="container image scale-to-fit loading">
     ${toolbarHtml}
-    <div class="container image scale-to-fit loading">
 	<div class="loading-indicator"></div>
 	<div class="image-load-error">
 		<p>${localize('preview.imageLoadError', "An error occurred while loading the image.")}</p>
