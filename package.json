@@ -1,9 +1,9 @@
 {
-  "name": "tga-image-preview",
+  "name": "tga-mapped-image-preview",
   "displayName": "TGA Image Preview",
   "description": "Preview TGA Images",
   "version": "1.0.0",
-  "publisher": "lunarwtr",
+  "publisher": "TheAssemblyArmada",
   "engines": {
     "vscode": "^1.66.0"
   },
@@ -20,7 +20,7 @@
   "license": "MIT",
   "repository": {
 		"type": "git",
-		"url": "https://github.com/lunarwtr/vscode-tga-image-preview.git"
+		"url": "https://github.com/DevGeniusCode/vscode-preview.git"
 	},
   "icon": "icon.png",
   "activationEvents": [
