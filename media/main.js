@@ -63,6 +63,55 @@
 
 	const vscode = acquireVsCodeApi();
 
+	document.getElementById('updateBtn').addEventListener('click', () => {
+		const mappedImage = document.getElementById('mappedImageSelect').value;
+		const coordinates = document.getElementById('coordinates').value;
+
+		vscode.postMessage({
+			command: 'updateCoordinates',
+			data: { mappedImage, coordinates }
+		});
+	});
+
+	vscode.postMessage({ command: 'getMappedImages' });
+	let texturesFilesMappedImagesDictionary = {};
+
+	window.addEventListener('message', event => {
+		const { command, data } = event.data;
+		console.log('main.js - message', event.data);
+
+		if (command === 'setMappedImages') {
+			console.log('main.js - setMappedImages data', data);
+
+			const mappedImageSelect = document.getElementById('mappedImageSelect');
+			mappedImageSelect.innerHTML = '';
+			data.mappedImages.forEach(imageInfo => {
+				const option = document.createElement('option');
+				option.value = imageInfo.mappedImageName;
+				option.textContent = imageInfo.mappedImageName;
+                option.imageInfo = imageInfo;
+				mappedImageSelect.appendChild(option);
+			});
+		}
+	});
+
+	mappedImageSelect.addEventListener('change', () => {
+        const selectedOption =  document.getElementById('mappedImageSelect').selectedOptions[0]
+        const selectedImageInfo = selectedOption.imageInfo;
+        console.log('main.js - mappedImageSelect change', selectedImageInfo);
+		const coordinatesInput = document.getElementById('coordinates');
+        let coords = selectedImageInfo?.coords;
+
+		if(coords){
+			coordinatesInput.value = `Left:${coords.left} Top:${coords.top} Right:${coords.right} Bottom:${coords.bottom}`;
+
+            updateHighlightFrame(coords);
+		}else{
+			coordinatesInput.value = '';
+			highlightFrame.style.display = 'none';
+		}
+	});
+
 	const initialState = vscode.getState() || { scale: 'fit', offsetX: 0, offsetY: 0 };
 
 	// State
@@ -77,6 +126,29 @@
 	const container = document.body;
 	const image = document.createElement('img');
 
+	const highlightFrame = document.createElement('div');
+	highlightFrame.classList.add('highlight-frame');
+	container.appendChild(highlightFrame);
+
+    function updateHighlightFrame(coords) {
+        if (!coords) {
+            highlightFrame.style.display = 'none';
+            return;
+        }
+
+        const imageRect = image.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        const zoom =  image.style.zoom || 1;
+        const offsetX = imageRect.left - containerRect.left;
+        const offsetY = imageRect.top - containerRect.top;
+
+		highlightFrame.style.left = `${offsetX + (coords.left * zoom)}px`;
+		highlightFrame.style.top = `${offsetY + (coords.top * zoom)}px`;
+		highlightFrame.style.width = `${(coords.right - coords.left) * zoom}px`;
+		highlightFrame.style.height = `${(coords.bottom - coords.top) * zoom}px`;
+        highlightFrame.style.display = 'block';
+    }
+
 	function updateScale(newScale) {
 		if (!image || !hasLoadedImage || !image.parentElement) {
 			return;
@@ -89,6 +161,7 @@
 			// @ts-ignore Non-standard CSS property
 			image.style.zoom = 'normal';
 			vscode.setState(undefined);
+			highlightFrame.style.display = 'none';
 		} else {
 			scale = clamp(newScale, MIN_SCALE, MAX_SCALE);
 			if (scale >= PIXELATION_THRESHOLD) {
@@ -110,6 +183,12 @@
 			window.scrollTo(newScrollX, newScrollY);
 
 			vscode.setState({ scale: scale, offsetX: newScrollX, offsetY: newScrollY });
+			const selectedMappedImage =  document.getElementById('mappedImageSelect').selectedOptions[0]
+			if (selectedMappedImage) {
+				const selectedImageInfo = selectedOption.imageInfo;
+				let coords = selectedImageInfo?.coords;
+				updateHighlightFrame(coords)
+			}
 		}
 
 		vscode.postMessage({
@@ -213,6 +292,11 @@
 		altPressed = e.altKey;
 
 		consumeClick = !isActive;
+		if (e.target && e.target.closest('#toolbar')) {
+			consumeClick = true;
+			return;
+		}
+
 	});
 
 	container.addEventListener('click', (/** @type {MouseEvent} */ e) => {

@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
-import { getMappedImages } from './getMappedImages';
+import {getMappedImages, MappedImageInfo} from './getMappedImages';
 import { getIniFolderPath } from './ini_path';
 
 
@@ -48,13 +47,14 @@ export function registerToolbarFeature(context: vscode.ExtensionContext) {
 }
 
 function generateToolbarHtml(
-    texturesFilesMappedImagesDictionary: Record<string, string[]>,
+    texturesFilesMappedImagesDictionary: Record<string, MappedImageInfo[]>,
     webview: vscode.Webview
 ): string {
-    const textureOptions = Object.keys(texturesFilesMappedImagesDictionary)
+    // TODO omptimize this using texturesFilesMappedImagesDictionary[textureFile]
+    const mappedImageOptions = Object.keys(texturesFilesMappedImagesDictionary)
         .map(
-            texture =>
-                `<option value="${texture}">${texture} (${texturesFilesMappedImagesDictionary[texture].length} images)</option>`
+            mappedImage =>
+                `<option value="${mappedImage}">${mappedImage} (${texturesFilesMappedImagesDictionary[mappedImage].length} images)</option>`
         )
         .join('\n');
 
@@ -69,21 +69,21 @@ function generateToolbarHtml(
                 const vscode = acquireVsCodeApi();
 
                 function updateCoordinates() {
-                    const texture = document.getElementById('textureSelect').value;
+                    const mappedImage = document.getElementById('mappedImageSelect').value;
                     const coordinates = document.getElementById('coordinates').value;
 
                     vscode.postMessage({
                         command: 'updateCoordinates',
-                        data: { texture, coordinates },
+                        data: { mappedImage, coordinates },
                     });
                 }
             </script>
         </head>
         <body>
             <h3>TGA Toolbar</h3>
-            <label for="textureSelect">Select Texture:</label>
-            <select id="textureSelect" onchange="updateCoordinates()">
-                ${textureOptions}
+            <label for="mappedImageSelect">Select Image:</label>
+            <select id="mappedImageSelect" onchange="updateCoordinates()">
+                ${mappedImageOptions}
             </select>
             <br><br>
             <label for="coordinates">Coordinates:</label>

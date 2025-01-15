@@ -11,7 +11,9 @@ import { Scale, ZoomStatusBarEntry } from './zoomStatusBarEntry';
 import { BinarySizeStatusBarEntry } from './binarySizeStatusBarEntry';
 import { PNG } from 'pngjs';
 import * as fs from 'fs';
+import * as path from 'path';
 import { Stream } from 'stream';
+import {getMappedImages, MappedImageInfo} from "./mapped_images/getMappedImages";
 const TGA = require('tga');
 
 const localize = nls.loadMessageBundle();
@@ -79,6 +81,7 @@ class Preview extends Disposable {
 	private _imageSize: string | undefined;
 	private _imageBinarySize: number | undefined;
 	private _imageZoom: Scale | undefined;
+	private texturesFilesMappedImagesDictionary: Record<string, MappedImageInfo[]> = {};
 
 	private readonly emptyPngDataUri = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAEElEQVR42gEFAPr/AP///wAI/AL+Sr4t6gAAAABJRU5ErkJggg==';
 
@@ -103,7 +106,33 @@ class Preview extends Disposable {
 				extensionRoot,
 			]
 		};
+		const iniFolderPath = vscode.workspace.getConfiguration('tgaPreview').get<string>('iniFolderPath') || undefined;
+        let mappedImages: MappedImageInfo[] = [];
+		if (iniFolderPath) {
+			const { texturesFilesMappedImagesDictionary } = getMappedImages(iniFolderPath);
+			this.texturesFilesMappedImagesDictionary = texturesFilesMappedImagesDictionary;
 
+            // Get the file name of current tga file.
+            const currentTextureFileName = path.basename(this.resource.fsPath, path.extname(this.resource.fsPath)).toLowerCase();
+
+            // Find and set the textures of current tga file.
+			if (texturesFilesMappedImagesDictionary[currentTextureFileName]) {
+				mappedImages = texturesFilesMappedImagesDictionary[currentTextureFileName];
+			}
+			else {
+				mappedImages = [];
+			}
+
+		// console.log('Preview - constructor this.texturesFilesMappedImagesDictionary',this.texturesFilesMappedImagesDictionary)
+		}
+
+		this.webviewEditor.webview.postMessage({
+			command: 'setMappedImages',
+			data: {
+				mappedImages: mappedImages,
+        		texturesFilesMappedImagesDictionary : this.texturesFilesMappedImagesDictionary
+			},
+		});
 		this._register(webviewEditor.webview.onDidReceiveMessage(message => {
 			switch (message.type) {
 				case 'size':
@@ -124,6 +153,28 @@ class Preview extends Disposable {
 						vscode.commands.executeCommand('vscode.openWith', resource, 'default', webviewEditor.viewColumn);
 						break;
 					}
+			}
+			switch (message.command) {
+				case 'getMappedImages':
+					// Find and set the mappedImages of current texture.tga file.
+					const currentTextureFileName = path.basename(this.resource.fsPath).toLowerCase();
+
+					let currentTexture : MappedImageInfo[] = [];
+					for( const textureName in this.texturesFilesMappedImagesDictionary){
+						if (textureName.toLowerCase() === currentTextureFileName){
+							currentTexture = this.texturesFilesMappedImagesDictionary[textureName];
+							break;
+						}
+					}
+					const currentMappedImages = currentTexture.map(imageInfo => imageInfo.mappedImageName);
+					// console.log('Preview - getTextures currentMappedImages', currentTextureFileName, currentMappedImages);
+
+					webviewEditor.webview.postMessage({ command: 'setMappedImages', data: { mappedImages : currentTexture} });
+					break;
+
+				case 'updateCoordinates':
+					console.log('Updated coordinates:', message.data);
+					break;
 			}
 		}));
 
@@ -213,6 +264,16 @@ class Preview extends Disposable {
 			src: await this.getResourcePath(this.webviewEditor, this.resource, version),
 		};
 
+    const toolbarHtml = `
+        <div id="toolbar">
+            <label for="mappedImageSelect">Select image:</label>
+            <select id="mappedImageSelect"></select>
+            <label for="coordinates">Coordinates:</label>
+            <input id="coordinates" type="text" placeholder="Enter coordinates (Left, Top, Right, Bottom)" />
+            <button id="updateBtn">Update</button>
+        </div>
+    `;
+
 		const nonce = getNonce();
 
 		const cspSource = this.webviewEditor.webview.cspSource;
@@ -226,18 +287,39 @@ class Preview extends Disposable {
 		content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
 
 	<title>Image Preview</title>
-
+    <style>
+        #toolbar {
+            position: fixed;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-bottom: 1px solid #ddd;
+            color: #d61a1a;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        .highlight-frame {
+            position: absolute;
+            border: 2px solid red;
+            pointer-events: none;
+            display: none;
+          }
+    </style>
 	<link rel="stylesheet" href="${escapeAttribute(this.extensionResource('/media/main.css'))}" type="text/css" media="screen" nonce="${nonce}">
 
 	<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: ${cspSource}; script-src 'nonce-${nonce}'; style-src ${cspSource} 'nonce-${nonce}';">
 	<meta id="image-preview-settings" data-settings="${escapeAttribute(JSON.stringify(settings))}">
 </head>
-<body class="container image scale-to-fit loading">
+<body>
+    ${toolbarHtml}
+    <div class="container image scale-to-fit loading">
 	<div class="loading-indicator"></div>
 	<div class="image-load-error">
 		<p>${localize('preview.imageLoadError', "An error occurred while loading the image.")}</p>
 		<a href="#" class="open-file-link">${localize('preview.imageLoadErrorLink', "Open file using VS Code's standard text/binary editor?")}</a>
 	</div>
+    </div>
 	<script src="${escapeAttribute(this.extensionResource('/media/main.js'))}" nonce="${nonce}"></script>
 </body>
 </html>`;
