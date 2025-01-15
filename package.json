@@ -52,6 +52,11 @@
         "command": "tga.zoomOut",
         "title": "%command.zoomOut%",
         "category": "Image Preview"
+      },
+      {
+        "command": "tga.updateIniFolderPath",
+        "title": "Update INI Folder Path",
+        "category": "TGA Tools"
       }
     ],
     "menus": {
@@ -67,6 +72,16 @@
           "group": "1_tga"
         }
       ]
+    },
+    "configuration": {
+      "title": "TGA Preview Settings",
+      "properties": {
+        "tgaPreview.iniFolderPath": {
+          "type": "string",
+          "default": "",
+          "description": "The folder path containing INI files for TGA preview."
+        }
+      }
     }
   },
   "scripts": {

@@ -9,6 +9,7 @@ import { PreviewManager } from './preview';
 import { SizeStatusBarEntry } from './sizeStatusBarEntry';
 import { ZoomStatusBarEntry } from './zoomStatusBarEntry';
 import { registerToolbarFeature } from './mapped_images/features';
+import { registerUpdateIniPathFeature } from './mapped_images/ini_path';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -36,6 +37,10 @@ export function activate(context: vscode.ExtensionContext) {
 		previewManager.activePreview?.zoomOut();
 	}));
 
+	// Mapped Images
+	registerUpdateIniPathFeature(context);
 	registerToolbarFeature(context);
 
 }
+
+

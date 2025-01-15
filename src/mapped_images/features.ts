@@ -1,10 +1,13 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { getMappedImages } from './getMappedImages';
+import { getIniFolderPath } from './ini_path';
+
 
 export function registerToolbarFeature(context: vscode.ExtensionContext) {
     context.subscriptions.push(
-        vscode.commands.registerCommand('tga.showToolbar', async (uri: vscode.Uri) => {
+        vscode.commands.registerCommand('tga.showToolbar', async () => {
+
             // Open a new WebView for the toolbar
             const panel = vscode.window.createWebviewPanel(
                 'tgaToolbar',
@@ -16,9 +19,16 @@ export function registerToolbarFeature(context: vscode.ExtensionContext) {
                 }
             );
 
+            // get Ini Folder Path
+            const iniFolderPath = await getIniFolderPath();
+
+            if (!iniFolderPath) {
+                vscode.window.showErrorMessage('INI folder path is not set. Please set it to proceed.');
+                return;
+            }
+
             // Scan the INI files
-            const folderPath = path.dirname(uri.fsPath);
-            const { texturesFilesMappedImagesDictionary } = getMappedImages(folderPath);
+            const { texturesFilesMappedImagesDictionary } = getMappedImages(iniFolderPath);
 
             // Create HTML for the WebView
             const html = generateToolbarHtml(texturesFilesMappedImagesDictionary, panel.webview);
