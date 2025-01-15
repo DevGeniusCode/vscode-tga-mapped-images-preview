@@ -8,6 +8,8 @@ import { BinarySizeStatusBarEntry } from './binarySizeStatusBarEntry';
 import { PreviewManager } from './preview';
 import { SizeStatusBarEntry } from './sizeStatusBarEntry';
 import { ZoomStatusBarEntry } from './zoomStatusBarEntry';
+import { registerToolbarFeature } from './mapped_images/features';
+
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log("activate", context.extension.id);
@@ -33,4 +35,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('tga.zoomOut', () => {
 		previewManager.activePreview?.zoomOut();
 	}));
+
+	registerToolbarFeature(context);
+
 }
